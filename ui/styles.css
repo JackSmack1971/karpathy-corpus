@@ -395,6 +395,13 @@ h3 {
   font-weight: 700;
 }
 
+.badge-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  justify-content: flex-end;
+}
+
 .badge {
   display: inline-flex;
   align-items: center;
@@ -406,6 +413,36 @@ h3 {
   font-size: 0.78rem;
   text-transform: uppercase;
   letter-spacing: 0.08em;
+}
+
+.badge--kind {
+  background: rgba(247, 200, 121, 0.12);
+  color: var(--accent-3);
+}
+
+.badge--ok {
+  background: rgba(115, 240, 192, 0.12);
+  color: var(--accent);
+}
+
+.badge--warn {
+  background: rgba(247, 200, 121, 0.12);
+  color: var(--accent-3);
+}
+
+.badge--error {
+  background: rgba(255, 143, 143, 0.12);
+  color: var(--danger);
+}
+
+.badge--muted {
+  background: rgba(151, 167, 188, 0.12);
+  color: var(--muted);
+}
+
+.badge--neutral {
+  background: rgba(139, 180, 255, 0.12);
+  color: var(--accent-2);
 }
 
 .source-url,

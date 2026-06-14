@@ -1,4 +1,9 @@
 const manifestUrl = new URL("../sources.manifest.json", window.location.href).href;
+const metadataLogUrls = [
+  new URL("../metadata/downloads.jsonl", window.location.href).href,
+  new URL("../metadata/skipped.jsonl", window.location.href).href,
+  new URL("../metadata/errors.jsonl", window.location.href).href,
+];
 const layoutLines = [
   "karpathy-corpus/",
   "  README.md",
@@ -33,6 +38,7 @@ const state = {
   manifest: [],
   bucketFilter: "all",
   query: "",
+  statusMap: {},
 };
 
 const els = {
@@ -64,9 +70,11 @@ function renderStats(manifest) {
     },
     { total: 0 }
   );
+  const ingested = manifest.filter((source) => state.statusMap[source.id]?.status === "ok").length;
 
   const cards = [
     ["Sources", counts.total, "Tracked in the manifest"],
+    ["Ingested", `${ingested} / ${counts.total}`, "Sources with status: ok"],
     ["HTML/PDF", counts.url ?? 0, "Rendered to Markdown or stored as PDFs"],
     ["YouTube", counts.youtube ?? 0, "Normalized transcripts"],
     ["Repos", counts.git ?? 0, "Cloned source trees"],
@@ -82,6 +90,85 @@ function renderStats(manifest) {
         </article>`
     )
     .join("");
+}
+
+function parseJsonl(text) {
+  return text
+    .split("\n")
+    .map((line) => line.trim())
+    .filter(Boolean)
+    .map((line) => {
+      try {
+        return JSON.parse(line);
+      } catch {
+        return null;
+      }
+    })
+    .filter(Boolean);
+}
+
+function mergeStatusRecord(statusMap, record) {
+  if (!record || !record.id) {
+    return;
+  }
+  const current = statusMap[record.id];
+  const nextTimestamp = record.timestamp ?? "";
+  const currentTimestamp = current?.timestamp ?? "";
+  if (!current || nextTimestamp >= currentTimestamp) {
+    statusMap[record.id] = record;
+  }
+}
+
+async function loadSourceStatusMap() {
+  const statusMap = {};
+  for (const logUrl of metadataLogUrls) {
+    try {
+      const response = await fetch(logUrl, { cache: "no-store" });
+      if (!response.ok) {
+        continue;
+      }
+      const text = await response.text();
+      for (const record of parseJsonl(text)) {
+        mergeStatusRecord(statusMap, record);
+      }
+    } catch {
+      continue;
+    }
+  }
+  return statusMap;
+}
+
+function statusBadgeForSource(source) {
+  const record = state.statusMap[source.id];
+  if (!record) {
+    return { label: "Not run", className: "badge badge--neutral" };
+  }
+
+  if (record.status === "ok") {
+    return { label: "Ingested", className: "badge badge--ok" };
+  }
+
+  if (record.status === "dry-run") {
+    return { label: "Dry run", className: "badge badge--neutral" };
+  }
+
+  if (record.status === "skipped") {
+    const reason = String(record.reason ?? "").toLowerCase();
+    if (reason.includes("already exists")) {
+      return { label: "Cached", className: "badge badge--muted" };
+    }
+    if (reason.includes("not available") || reason.includes("unavailable")) {
+      return { label: "Tool missing", className: "badge badge--warn" };
+    }
+    return { label: "Skipped", className: "badge badge--muted" };
+  }
+
+  if (record.status === "error") {
+    const label = record.error_code ?? String(record.error ?? "Error").slice(0, 60);
+    return { label, className: "badge badge--error" };
+  }
+
+  return { label: String(record.status ?? "Unknown"), className: "badge badge--neutral" };
 }
 
 function renderPipeline() {
@@ -162,6 +249,7 @@ function renderSources(manifest) {
 
   els.sources.innerHTML = filtered
     .map((source) => {
+      const status = statusBadgeForSource(source);
       const extras = [
         source.output ? `output: ${source.output}` : null,
         source.staging_template ? `stage: ${source.staging_template}` : null,
@@ -174,11 +262,14 @@ function renderSources(manifest) {
       return `
         <article class="source-card">
           <div class="source-topline">
-            <div class="source-id">${source.id}</div>
-            <div class="badge">${kindLabel(source.kind)}</div>
+            <div class="source-id">${escapeHtml(source.id)}</div>
+            <div class="badge-row">
+              <div class="badge badge--kind">${escapeHtml(kindLabel(source.kind))}</div>
+              <div class="${status.className}">${escapeHtml(status.label)}</div>
+            </div>
           </div>
-          <div class="source-url">${source.url ?? "(local copy)"}</div>
-          <div class="source-extra">${extras}</div>
+          <div class="source-url">${escapeHtml(source.url ?? "(local copy)")}</div>
+          <div class="source-extra">${escapeHtml(extras)}</div>
         </article>`;
     })
     .join("");
@@ -196,10 +287,13 @@ async function loadManifest() {
     }
     const data = await response.json();
     state.manifest = data.sources ?? [];
-    renderStats(state.manifest);
     renderBuckets(state.manifest);
-    renderSources(state.manifest);
     renderManifestMeta(state.manifest);
+    renderStats(state.manifest);
+    renderSources(state.manifest);
+    state.statusMap = await loadSourceStatusMap();
+    renderStats(state.manifest);
+    renderSources(state.manifest);
   } catch (error) {
     els.sources.innerHTML = `
       <article class="source-card">
