@@ -1,0 +1,16 @@
+# Python
+__pycache__/
+*.py[cod]
+*.pyo
+.venv/
+.pytest_cache/
+
+# Cloned source repos (re-clone via ingest pipeline)
+sources/github/
+
+# Large staged subtitle/metadata files (re-fetch via ingest pipeline)
+sources/transcripts/
+
+# OS
+.DS_Store
+Thumbs.db

@@ -1,0 +1,179 @@
+{
+  "sources": [
+    {
+      "id": "karpathy_github_blog_repo",
+      "kind": "git",
+      "bucket": "github-blog",
+      "url": "https://github.com/karpathy/karpathy.github.io",
+      "output": "sources/github/karpathy.github.io"
+    },
+    {
+      "id": "karpathy_github_blog_posts",
+      "kind": "copy_tree",
+      "bucket": "github-blog",
+      "source_dir": "sources/github/karpathy.github.io/_posts",
+      "output": "raw/github-blog"
+    },
+    {
+      "id": "karpathy_bear_blog_index",
+      "kind": "url",
+      "bucket": "bear-blog",
+      "url": "https://karpathy.bearblog.dev/blog/",
+      "output": "raw/bear-blog/index.md"
+    },
+    {
+      "id": "karpathy_medium_software_2_0",
+      "kind": "url",
+      "bucket": "medium",
+      "url": "https://karpathy.medium.com/software-2-0-a64152b37c35",
+      "output": "raw/medium/software-2-0.md"
+    },
+    {
+      "id": "karpathy_zero_to_hero",
+      "kind": "url",
+      "bucket": "courses",
+      "url": "https://www.youtube.com/playlist?list=PLAqhIrjkxbuWI23v9cThsA9GvCAUhRvKZ",
+      "output": "raw/courses/zero-to-hero-playlist.md"
+    },
+    {
+      "id": "cs231n_course_notes",
+      "kind": "url",
+      "bucket": "courses",
+      "url": "https://cs231n.github.io/",
+      "output": "raw/courses/cs231n-course-notes.md"
+    },
+    {
+      "id": "cs231n_winter_2016_lectures",
+      "kind": "youtube",
+      "bucket": "courses",
+      "url": "https://www.youtube.com/playlist?list=PLkt2uSq6rBVctENoVBg1TpCC7OQi31AlC",
+      "staging_root": "sources/transcripts/cs231n-winter-2016",
+      "staging_template": "sources/transcripts/cs231n-winter-2016/%(id)s/%(id)s.%(ext)s",
+      "transcript_output": "raw/transcripts/courses/cs231n-winter-2016/%(id)s.json"
+    },
+    {
+      "id": "karpathy_youtube_channel",
+      "kind": "youtube",
+      "bucket": "transcripts",
+      "url": "https://www.youtube.com/@AndrejKarpathy/videos",
+      "staging_root": "sources/transcripts/youtube",
+      "staging_template": "sources/transcripts/youtube/%(id)s/%(id)s.%(ext)s",
+      "transcript_output": "raw/transcripts/youtube/%(id)s.json"
+    },
+    {
+      "id": "dwarkesh_podcast_2025",
+      "kind": "youtube",
+      "bucket": "transcripts",
+      "url": "https://www.youtube.com/watch?v=lXUZvyajciY",
+      "staging_root": "sources/transcripts/talks",
+      "staging_template": "sources/transcripts/talks/%(id)s/%(id)s.%(ext)s",
+      "transcript_output": "raw/transcripts/talks/%(id)s.json"
+    },
+    {
+      "id": "yc_ai_startup_school_2025",
+      "kind": "youtube",
+      "bucket": "transcripts",
+      "url": "https://www.youtube.com/watch?v=LCEmiRjPEtQ",
+      "staging_root": "sources/transcripts/talks",
+      "staging_template": "sources/transcripts/talks/%(id)s/%(id)s.%(ext)s",
+      "transcript_output": "raw/transcripts/talks/%(id)s.json"
+    },
+    {
+      "id": "state_of_gpt_2023",
+      "kind": "youtube",
+      "bucket": "transcripts",
+      "url": "https://www.youtube.com/watch?v=bZQun8Y4L2A",
+      "staging_root": "sources/transcripts/talks",
+      "staging_template": "sources/transcripts/talks/%(id)s/%(id)s.%(ext)s",
+      "transcript_output": "raw/transcripts/talks/%(id)s.json"
+    },
+    {
+      "id": "lex_fridman_podcast_2022",
+      "kind": "youtube",
+      "bucket": "transcripts",
+      "url": "https://www.youtube.com/watch?v=cdiD-9MMpb0",
+      "staging_root": "sources/transcripts/talks",
+      "staging_template": "sources/transcripts/talks/%(id)s/%(id)s.%(ext)s",
+      "transcript_output": "raw/transcripts/talks/%(id)s.json"
+    },
+    {
+      "id": "tesla_ai_day_2021",
+      "kind": "youtube",
+      "bucket": "transcripts",
+      "url": "https://www.youtube.com/watch?v=j0z4FweCy4M",
+      "staging_root": "sources/transcripts/talks",
+      "staging_template": "sources/transcripts/talks/%(id)s/%(id)s.%(ext)s",
+      "transcript_output": "raw/transcripts/talks/%(id)s.json"
+    },
+    {
+      "id": "paper_densecap",
+      "kind": "url",
+      "bucket": "papers",
+      "url": "https://cs.stanford.edu/people/karpathy/densecap.pdf",
+      "output": "raw/papers/densecap.pdf"
+    },
+    {
+      "id": "paper_visualizing_rnns",
+      "kind": "url",
+      "bucket": "papers",
+      "url": "https://arxiv.org/pdf/1506.02078",
+      "output": "raw/papers/visualizing_and_understanding_recurrent_networks.pdf"
+    },
+    {
+      "id": "paper_deep_fragment_embeddings",
+      "kind": "url",
+      "bucket": "papers",
+      "url": "https://cs.stanford.edu/people/karpathy/nips2014.pdf",
+      "output": "raw/papers/deep_fragment_embeddings_for_bidirectional_image_sentence_mapping.pdf"
+    },
+    {
+      "id": "paper_deep_visual_semantic_alignments",
+      "kind": "url",
+      "bucket": "papers",
+      "url": "https://cs.stanford.edu/people/karpathy/cvpr2015.pdf",
+      "output": "raw/papers/deep_visual_semantic_alignments_for_generating_image_descriptions.pdf"
+    },
+    {
+      "id": "paper_pixelcnn_pp",
+      "kind": "url",
+      "bucket": "papers",
+      "url": "https://openreview.net/pdf?id=BJrFC6ceg",
+      "output": "raw/papers/pixelcnn_pp.pdf"
+    },
+    {
+      "id": "repo_micrograd",
+      "kind": "git",
+      "bucket": "github",
+      "url": "https://github.com/karpathy/micrograd",
+      "output": "sources/github/micrograd"
+    },
+    {
+      "id": "repo_nanoGPT",
+      "kind": "git",
+      "bucket": "github",
+      "url": "https://github.com/karpathy/nanoGPT",
+      "output": "sources/github/nanoGPT"
+    },
+    {
+      "id": "repo_llm_c",
+      "kind": "git",
+      "bucket": "github",
+      "url": "https://github.com/karpathy/llm.c",
+      "output": "sources/github/llm.c"
+    },
+    {
+      "id": "repo_nanochat",
+      "kind": "git",
+      "bucket": "github",
+      "url": "https://github.com/karpathy/nanochat",
+      "output": "sources/github/nanochat"
+    },
+    {
+      "id": "repo_arxiv_sanity_preserver",
+      "kind": "git",
+      "bucket": "github",
+      "url": "https://github.com/karpathy/arxiv-sanity-preserver",
+      "output": "sources/github/arxiv-sanity-preserver"
+    }
+  ]
+}

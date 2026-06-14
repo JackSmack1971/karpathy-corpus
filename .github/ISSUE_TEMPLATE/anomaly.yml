@@ -1,0 +1,213 @@
+name: "Anomaly"
+description: "Track statistical outliers across continuous metrics and repository-derived signals."
+title: "[ANOMALY] "
+labels:
+  - "source:agent"
+  - "status:needs-triage"
+  - "type:anomaly"
+body:
+  - type: markdown
+    attributes:
+      value: |
+        ## Agent Issue Protocol: Anomaly Contract
+
+        Use this template for `[ANOMALY]` findings only.
+
+        This template tracks statistical deviations rather than deterministic
+        binary failures.
+
+        Valid title format:
+
+        ```text
+        [ANOMALY] {specific_symbol/file/endpoint} {describe_state_not_fix}
+        ```
+
+        Title must be **80 characters or fewer** and must describe the observed
+        statistical state, not the proposed fix.
+
+        Valid example:
+
+        ```text
+        [ANOMALY] checkout p99 jumped 8σ after deploy abc1234
+        ```
+
+        Z-score detection mechanics:
+
+        ```text
+        z = (x - μ) / σ
+        ```
+
+        Filing thresholds:
+
+        - If `|z| >= 2`, file a `type:anomaly` issue.
+        - If `|z| >= 3`, file a `type:anomaly` issue and escalate with
+          `priority:p1`.
+
+        Boundary matrix:
+
+        - `±2σ`: approximately 5% sensitivity; use for code-quality density,
+          latency p95/p99, and error rates.
+        - `±3σ`: approximately 0.3% sensitivity; use for capacity and resource
+          saturation to reduce noise.
+        - Robust IQR: use `>1.5×IQR` outside `[Q1,Q3]` when `N<10` or the
+          distribution is highly skewed.
+
+        Zero-infra computable signals:
+
+        - File length from `git log --numstat`.
+        - Function complexity.
+        - PR diff size.
+        - Test runtime.
+        - TODO density.
+        - Open-issue age.
+
+        The exact upstream YAML syntax for this template was classified as
+        `[UNDEFINED ARCHITECTURAL VARIABLE]`; this file implements the defined
+        structural contract, label matrix, statistical thresholds, escalation
+        rule, and payload requirements.
+
+  - type: dropdown
+    id: escalation-priority
+    attributes:
+      label: "Dynamic Escalation"
+      description: "Select priority based on statistical severity. Apply priority:p1 when |z| >= 3."
+      options:
+        - "No priority escalation"
+        - "priority:p1"
+      default: 0
+    validations:
+      required: true
+
+  - type: dropdown
+    id: detection-method
+    attributes:
+      label: "Detection Method"
+      description: "Select the statistical method used to classify the anomaly."
+      options:
+        - "Z-score: |z| >= 2"
+        - "Z-score: |z| >= 3"
+        - "Robust IQR: >1.5×IQR outside [Q1,Q3]"
+        - "Zero-infra repository/system metadata signal"
+    validations:
+      required: true
+
+  - type: dropdown
+    id: target-metric-class
+    attributes:
+      label: "Target Metric Class"
+      description: "Classify the metric or repository-derived signal."
+      options:
+        - "Code-quality density"
+        - "Latency p95/p99"
+        - "Error rate"
+        - "Capacity"
+        - "Resource saturation"
+        - "File length"
+        - "Function complexity"
+        - "PR diff size"
+        - "Test runtime"
+        - "TODO density"
+        - "Open-issue age"
+        - "Other continuous signal"
+    validations:
+      required: true
+
+  - type: textarea
+    id: statistical-tuple
+    attributes:
+      label: "1. Statistical Tuple"
+      description: "Provide the mandatory anomaly tuple: (signal, μ, σ, current, z, cause hypothesis, scope)."
+      placeholder: |
+        Statistical tuple:
+          signal:
+          μ:
+          σ:
+          current:
+          z:
+          cause hypothesis:
+          scope:
+    validations:
+      required: true
+
+  - type: textarea
+    id: forensic-evidence-trace
+    attributes:
+      label: "2. Forensic Evidence Trace"
+      description: "Provide timestamp, log output, metric aggregation query, repository metadata command, or supporting calculation."
+      placeholder: |
+        Evidence:
+        - Timestamp:
+        - Query/command:
+        - Output:
+        - Commit/deploy SHA:
+    validations:
+      required: true
+
+  - type: textarea
+    id: state-delta-assertion
+    attributes:
+      label: "3. State Delta Assertion (FSV Style)"
+      description: "Declare the Expected vs Observed state using FSV-style Source of Truth comparison."
+      placeholder: |
+        Expected:
+          SoT baseline:
+          Expected distribution/range:
+
+        Observed:
+          Current signal:
+          Observed deviation:
+
+        Delta:
+          SoT != observed state because ...
+    validations:
+      required: true
+
+  - type: textarea
+    id: blast-radius-definition
+    attributes:
+      label: "4. Blast Radius Definition"
+      description: "Scope the operational, user, system, or repository impact of the anomaly."
+      placeholder: |
+        Impacted scope:
+        - Metric/signal:
+        - Component/file/endpoint/service:
+        - Environment:
+        - User/system impact:
+        - Noise or confidence notes:
+    validations:
+      required: true
+
+  - type: textarea
+    id: execution-directive
+    attributes:
+      label: "5. Execution Directive"
+      description: "Suggest the next action for the polling, pickup, or verification agent."
+      placeholder: |
+        Suggested next action:
+        - investigate further
+        - verify baseline sample
+        - compare against recent deploy or commit
+        - inspect p95/p99 latency path
+        - reduce resource saturation
+        - validate repository-derived signal
+        - escalate to priority:p1
+    validations:
+      required: true
+
+  - type: textarea
+    id: traceability-footer
+    attributes:
+      label: "6. Traceability Footer"
+      description: "Append execution identity metadata for deterministic multi-agent synchronization."
+      value: |
+        ---
+        Executing agent: agent:
+        Session ID:
+        Commit SHA:
+      placeholder: |
+        ---
+        Executing agent: agent:<name>
+        Session ID: session-id
+        Commit SHA: commit-sha
+    validations:
+      required: true

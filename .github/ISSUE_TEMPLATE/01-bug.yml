@@ -1,0 +1,125 @@
+name: "Bug Report"
+description: "Report a reproducible defect, stack trace, test flake, FSV disagreement, or uncovered 5xx/4xx response."
+title: "[BUG] "
+labels:
+  - "source:agent"
+  - "status:needs-triage"
+body:
+  - type: markdown
+    attributes:
+      value: |
+        ## Agent Issue Protocol: Bug Contract
+
+        Use this template for `[BUG]` defects only.
+
+        Valid title format:
+
+        ```text
+        [BUG] {specific_symbol/file/endpoint} {describe_state_not_fix}
+        ```
+
+        Title must be **80 characters or fewer**.
+
+        Valid example:
+
+        ```text
+        [BUG] /orders POST returns 200 but row not inserted when amount==0
+        ```
+
+        Invalid examples:
+
+        ```text
+        Bug in orders
+        Fix the payment thing
+        ```
+
+        The exact upstream YAML syntax for this template was classified as
+        `[UNDEFINED ARCHITECTURAL VARIABLE]`; this file implements the defined
+        structural contract, label matrix, and payload requirements.
+
+  - type: input
+    id: forensic-evidence-trace
+    attributes:
+      label: "1. Forensic Evidence Trace"
+      description: "Provide concrete evidence: file:line, error trace, git SHA, query output, dashboard link, logs, or failing test output."
+      placeholder: "Example: src/orders/handler.ts:142; commit abc1234; failing query output..."
+    validations:
+      required: true
+
+  - type: textarea
+    id: state-delta-assertion
+    attributes:
+      label: "2. State Delta Assertion"
+      description: "Declare the Expected vs Observed state. This should support FSV interrogation of Source of Truth vs returned/observed state."
+      placeholder: |
+        Expected:
+          SoT: ...
+          Return/Observed: ...
+
+        Observed:
+          SoT: ...
+          Return/Observed: ...
+
+        Delta:
+          SoT != return because ...
+    validations:
+      required: true
+
+  - type: textarea
+    id: blast-radius-definition
+    attributes:
+      label: "3. Blast Radius Definition"
+      description: "Scope the impact of the defect: affected users, endpoints, agents, services, tests, queues, data, or environments."
+      placeholder: |
+        Impacted scope:
+        - Endpoint/service:
+        - Environment:
+        - Users/agents:
+        - Data integrity risk:
+    validations:
+      required: true
+
+  - type: textarea
+    id: reproduction-sequence
+    attributes:
+      label: "4. Reproduction Sequence"
+      description: "List deterministic steps required to trigger the anomaly. Mandatory when the defect is non-trivial."
+      placeholder: |
+        1. Checkout commit ...
+        2. Run ...
+        3. Submit request ...
+        4. Observe ...
+    validations:
+      required: true
+
+  - type: textarea
+    id: execution-directive
+    attributes:
+      label: "5. Execution Directive"
+      description: "Suggest the next action for the polling agent."
+      placeholder: |
+        Suggested next action:
+        - investigate further
+        - isolate failing component
+        - compare SoT against returned state
+        - reproduce under clean environment
+    validations:
+      required: true
+
+  - type: textarea
+    id: traceability-footer
+    attributes:
+      label: "6. Traceability Footer"
+      description: "Append execution identity metadata for deterministic multi-agent synchronization."
+      value: |
+        ---
+        Executing agent:
+        Session ID:
+        Commit SHA:
+      placeholder: |
+        ---
+        Executing agent: agent-name/version
+        Session ID: session-id
+        Commit SHA: commit-sha
+    validations:
+      required: true

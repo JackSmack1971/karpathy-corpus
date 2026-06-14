@@ -1,0 +1,194 @@
+name: "Test Gap"
+description: "Track missing verification coverage within the Physical State Verification pipeline."
+title: "[TEST] "
+labels:
+  - "source:agent"
+  - "status:needs-triage"
+  - "type:test-gap"
+  - "priority:p2"
+body:
+  - type: markdown
+    attributes:
+      value: |
+        ## Agent Issue Protocol: Test Gap Contract
+
+        Use this template for `[TEST]` findings only.
+
+        This template tracks missing test coverage and Physical State
+        Verification (FSV) gaps.
+
+        Valid title format:
+
+        ```text
+        [TEST] {specific_symbol/file/endpoint} {describe_state_not_fix}
+        ```
+
+        Title must be **80 characters or fewer** and must describe the current
+        verification gap, not the proposed test implementation.
+
+        Default execution tier is `priority:p2`.
+
+        Authorized trigger conditions include:
+
+        - Functional logic lacking dedicated test coverage.
+        - State changes without corresponding Physical State Verification
+          against the Source of Truth.
+        - Missing boundary coverage across mandatory edge categories, including
+          max+1, unicode injection, concurrent execution, null/empty input,
+          invalid type, malformed payload, timeout, retry behavior, permission
+          boundary, idempotency, overflow, underflow, ordering, duplicate input,
+          partial failure, and external dependency failure.
+
+        If an agent changes state but cannot assert that change through FSV,
+        queue replenishment is required before the execution turn ends.
+
+        The exact upstream YAML syntax for this template was classified as
+        `[UNDEFINED ARCHITECTURAL VARIABLE]`; this file implements the defined
+        structural contract, label matrix, execution tier, operational triggers,
+        and payload requirements.
+
+  - type: dropdown
+    id: test-gap-trigger
+    attributes:
+      label: "Test Gap Trigger"
+      description: "Classify the verification gap."
+      options:
+        - "Function without dedicated test coverage"
+        - "FSV omission after state change"
+        - "Boundary case coverage gap"
+        - "Regression coverage gap"
+        - "Integration coverage gap"
+        - "End-to-end coverage gap"
+        - "Other missing verification coverage"
+    validations:
+      required: true
+
+  - type: dropdown
+    id: execution-tier
+    attributes:
+      label: "Execution Tier"
+      description: "Default is priority:p2 unless the gap protects an active security, outage, or data-loss path."
+      options:
+        - "priority:p2"
+        - "priority:p1"
+        - "priority:p0"
+      default: 0
+    validations:
+      required: true
+
+  - type: checkboxes
+    id: boundary-gap-classes
+    attributes:
+      label: "Boundary Gap Classes"
+      description: "Select any uncovered edge categories observed. Leave unchecked if not applicable."
+      options:
+        - label: "max+1 / upper-bound overflow"
+        - label: "min-1 / lower-bound underflow"
+        - label: "null or empty input"
+        - label: "invalid type"
+        - label: "malformed payload"
+        - label: "unicode injection"
+        - label: "concurrent execution"
+        - label: "timeout"
+        - label: "retry behavior"
+        - label: "permission boundary"
+        - label: "idempotency"
+        - label: "numeric overflow"
+        - label: "ordering"
+        - label: "duplicate input"
+        - label: "partial failure"
+        - label: "external dependency failure"
+
+  - type: textarea
+    id: forensic-evidence-trace
+    attributes:
+      label: "1. Forensic Evidence Trace"
+      description: "Provide concrete evidence exposing the coverage gap: file:line, diff, query output, coverage report, test listing, or commit SHA."
+      placeholder: |
+        Evidence:
+        - File/line:
+        - Diff or commit SHA:
+        - Coverage/test command:
+        - Output showing missing verification:
+    validations:
+      required: true
+
+  - type: textarea
+    id: state-delta-assertion
+    attributes:
+      label: "2. State Delta Assertion (FSV Style)"
+      description: "Declare Expected vs Observed verification state, including what the SoT reports and what should be physically verified."
+      placeholder: |
+        Expected:
+          SoT reports:
+          Required verification:
+
+        Observed:
+          Existing tests/FSV:
+          Missing assertion:
+
+        Delta:
+          Expected verification != observed verification because ...
+    validations:
+      required: true
+
+  - type: textarea
+    id: blast-radius-definition
+    attributes:
+      label: "3. Blast Radius Definition"
+      description: "Scope the impact of the verification gap, such as silent production failure, regression risk, data integrity risk, or unverified boundary behavior."
+      placeholder: |
+        Impacted scope:
+        - Symbol/file/endpoint:
+        - State transition or behavior:
+        - Production input risk:
+        - Silent failure or regression risk:
+    validations:
+      required: true
+
+  - type: textarea
+    id: reproduction-sequence
+    attributes:
+      label: "4. Reproduction Sequence"
+      description: "List steps to verify the coverage or FSV gap, if non-trivial."
+      placeholder: |
+        1. Checkout commit ...
+        2. Run test/coverage command ...
+        3. Inspect modified file or state transition ...
+        4. Confirm missing assertion, missing boundary test, or missing FSV check ...
+    validations:
+      required: true
+
+  - type: textarea
+    id: execution-directive
+    attributes:
+      label: "5. Execution Directive"
+      description: "Suggest the next action for the polling, pickup, or verification agent."
+      placeholder: |
+        Suggested next action:
+        - investigate further
+        - add dedicated unit test
+        - add FSV assertion against SoT
+        - implement synthetic data test across 3 boundary classes
+        - add regression test for modified behavior
+        - add concurrency/idempotency coverage
+    validations:
+      required: true
+
+  - type: textarea
+    id: traceability-footer
+    attributes:
+      label: "6. Traceability Footer"
+      description: "Append execution identity metadata for deterministic multi-agent synchronization."
+      value: |
+        ---
+        Executing agent: agent:
+        Session ID:
+        Commit SHA:
+      placeholder: |
+        ---
+        Executing agent: agent:<name>
+        Session ID: session-id
+        Commit SHA: commit-sha
+    validations:
+      required: true

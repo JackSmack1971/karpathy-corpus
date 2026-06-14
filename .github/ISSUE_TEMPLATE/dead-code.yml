@@ -1,0 +1,168 @@
+name: "Dead Code"
+description: "Track structurally unused or redundant logic for extraction or deletion."
+title: "[DEAD] "
+labels:
+  - "source:agent"
+  - "status:needs-triage"
+  - "type:dead-code"
+body:
+  - type: markdown
+    attributes:
+      value: |
+        ## Agent Issue Protocol: Dead Code Contract
+
+        Use this template for `[DEAD]` items only.
+
+        This template tracks structurally unused or redundant logic for
+        extraction or deletion under the directive:
+
+        ```text
+        delete, don't comment
+        ```
+
+        Valid title format:
+
+        ```text
+        [DEAD] {specific_symbol/file/endpoint} {describe_state_not_fix}
+        ```
+
+        Title must be **80 characters or fewer** and must describe the current
+        state, not the proposed fix.
+
+        Valid example:
+
+        ```text
+        [DEAD] PaymentLegacyProcessor unused since v4.0 migration
+        ```
+
+        Trigger this template before the execution turn ends when dead code is
+        observed during Phase 3 (WORK) but cannot be immediately resolved.
+
+        Operational triggers include:
+
+        - Static unused symbols found by tools such as `ts-prune`, `vulture`,
+          Go `deadcode`, `cargo-udeps`, or `knip`.
+        - Runtime zero-hit surfaces over a 30-day runtime coverage window.
+        - Stale feature flags static on or off for `>90d`.
+        - Decayed `TODO`, `FIXME`, `XXX`, or `HACK` comments older than 12 months.
+        - Orphaned database columns or indexes with zero reads/writes verified
+          through physical queries such as `pg_stat_user_tables` or
+          `pg_stat_user_indexes`.
+        - Duplicated logic across `2+` sites.
+        - Commented-out code blocks left over from previous sessions.
+
+        Verification gate before deletion:
+
+        Confirm the artifact is not implicitly invoked through reflection,
+        Dependency Injection (DI), dynamic dispatch, generated SDKs, framework
+        magic, routing conventions, or runtime registration.
+
+        The exact upstream YAML syntax for this template was classified as
+        `[UNDEFINED ARCHITECTURAL VARIABLE]`; this file implements the defined
+        structural contract, label matrix, operational triggers, verification
+        gate, and payload requirements.
+
+  - type: input
+    id: forensic-evidence-trace
+    attributes:
+      label: "1. Forensic Evidence Trace"
+      description: "Provide concrete evidence: file:line, diff, static-analysis output, runtime coverage, query output, or commit SHA."
+      placeholder: "Example: src/payments/PaymentLegacyProcessor.ts:31; knip output; pg_stat_user_indexes output..."
+    validations:
+      required: true
+
+  - type: textarea
+    id: state-delta-assertion
+    attributes:
+      label: "2. State Delta Assertion (FSV Style)"
+      description: "Declare the Expected vs Observed state using FSV-style Source of Truth comparison."
+      placeholder: |
+        Expected:
+          SoT: Code paths should be reachable, required, or intentionally retained.
+          Observed artifact state: ...
+
+        Observed:
+          SoT: ...
+          Artifact usage/reachability: ...
+
+        Delta:
+          SoT != observed state because ...
+    validations:
+      required: true
+
+  - type: textarea
+    id: blast-radius-definition
+    attributes:
+      label: "3. Blast Radius Definition"
+      description: "Scope the impact and risk of removing or extracting the dead code."
+      placeholder: |
+        Impacted scope:
+        - Symbol/file/endpoint/table/index:
+        - Runtime path or caller graph:
+        - Tests/docs/generated clients:
+        - Deletion risk:
+    validations:
+      required: true
+
+  - type: textarea
+    id: reproduction-sequence
+    attributes:
+      label: "4. Reproduction Sequence"
+      description: "List deterministic steps to verify the artifact is unreachable or redundant."
+      placeholder: |
+        1. Checkout commit ...
+        2. Run static analysis command ...
+        3. Query runtime coverage or database stats ...
+        4. Search for dynamic bindings/reflection/DI/generated SDK usage ...
+        5. Observe zero reachable callers or redundant duplicate logic ...
+    validations:
+      required: true
+
+  - type: checkboxes
+    id: verification-gate
+    attributes:
+      label: "Deletion Verification Gate"
+      description: "Confirm dynamic invocation risks were checked before deletion is attempted."
+      options:
+        - label: "Reflection usage checked"
+          required: true
+        - label: "Dependency Injection bindings checked"
+          required: true
+        - label: "Dynamic dispatch or runtime registration checked"
+          required: true
+        - label: "Generated SDKs, framework conventions, or routing magic checked"
+          required: true
+
+  - type: textarea
+    id: execution-directive
+    attributes:
+      label: "5. Execution Directive"
+      description: "Suggest the next action for the polling or pickup agent."
+      placeholder: |
+        Suggested next action:
+        - investigate further
+        - delete after verification gate passes
+        - remove duplicate implementation
+        - retire stale feature flag branch
+        - validate zero-hit endpoint before removal
+        - drop orphaned database index after query verification
+    validations:
+      required: true
+
+  - type: textarea
+    id: traceability-footer
+    attributes:
+      label: "6. Traceability Footer"
+      description: "Append execution identity metadata for deterministic multi-agent synchronization."
+      value: |
+        ---
+        Executing agent: agent:
+        Session ID:
+        Commit SHA:
+      placeholder: |
+        ---
+        Executing agent: agent:<name>
+        Session ID: session-id
+        Commit SHA: commit-sha
+    validations:
+      required: true

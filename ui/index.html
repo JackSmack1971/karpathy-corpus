@@ -1,0 +1,119 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Karpathy Corpus Dashboard</title>
+    <meta
+      name="description"
+      content="A compact dashboard for the Karpathy corpus scaffold: sources, normalization flow, and artifact layout."
+    />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="./styles.css" />
+  </head>
+  <body>
+    <div class="page-shell">
+      <header class="hero">
+        <div class="hero-copy">
+          <p class="eyebrow">Corpus scaffold</p>
+          <h1>Karpathy Corpus Dashboard</h1>
+          <p class="lede">
+            A lightweight view of the project intent: collect high-signal Karpathy sources,
+            normalize HTML into Markdown, normalize captions into transcript JSON, and keep the
+            acquisition traceable.
+          </p>
+          <div class="hero-actions">
+            <a class="button primary" href="../README.md">Read scaffold</a>
+            <a class="button secondary" href="../sources.manifest.json">Open manifest</a>
+          </div>
+        </div>
+        <aside class="hero-panel">
+          <div class="stat-grid" id="stats"></div>
+        </aside>
+      </header>
+
+      <main class="content-grid">
+        <section class="panel wide">
+          <div class="panel-head">
+            <div>
+              <p class="panel-kicker">Intent</p>
+              <h2>What this project does</h2>
+            </div>
+          </div>
+          <div class="intent-cards">
+            <article class="intent-card">
+              <h3>Source collection</h3>
+              <p>Pulls canonical blogs, talks, course material, GitHub repos, and papers from stable sources.</p>
+            </article>
+            <article class="intent-card">
+              <h3>Normalization</h3>
+              <p>Converts web pages into Markdown and subtitles into a shared transcript schema.</p>
+            </article>
+            <article class="intent-card">
+              <h3>Traceability</h3>
+              <p>Records source metadata, staging paths, and downloads so every artifact has provenance.</p>
+            </article>
+          </div>
+        </section>
+
+        <section class="panel">
+          <div class="panel-head">
+            <div>
+              <p class="panel-kicker">Pipeline</p>
+              <h2>Functionality flow</h2>
+            </div>
+          </div>
+          <ol class="pipeline" id="pipeline"></ol>
+        </section>
+
+        <section class="panel">
+          <div class="panel-head">
+            <div>
+              <p class="panel-kicker">Buckets</p>
+              <h2>Source groups</h2>
+            </div>
+          </div>
+          <div class="bucket-list" id="buckets"></div>
+        </section>
+
+        <section class="panel wide">
+          <div class="panel-head">
+            <div>
+              <p class="panel-kicker">Manifest</p>
+              <h2>Tracked sources</h2>
+            </div>
+            <div class="panel-meta" id="manifest-meta"></div>
+          </div>
+          <div class="source-toolbar">
+            <input id="filter" type="search" placeholder="Filter sources" aria-label="Filter sources" />
+            <div class="toggle-row" role="tablist" aria-label="Source kind filters">
+              <button class="chip is-active" data-kind="all" type="button">All</button>
+              <button class="chip" data-kind="url" type="button">HTML</button>
+              <button class="chip" data-kind="youtube" type="button">YouTube</button>
+              <button class="chip" data-kind="git" type="button">Git</button>
+              <button class="chip" data-kind="copy_tree" type="button">Copy</button>
+            </div>
+          </div>
+          <div class="source-list" id="sources"></div>
+        </section>
+
+        <section class="panel">
+          <div class="panel-head">
+            <div>
+              <p class="panel-kicker">Layout</p>
+              <h2>Output structure</h2>
+            </div>
+          </div>
+          <pre class="tree" id="layout"></pre>
+        </section>
+      </main>
+    </div>
+
+    <script src="./app.js" type="module"></script>
+  </body>
+</html>

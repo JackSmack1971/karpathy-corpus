@@ -1,0 +1,191 @@
+name: "Architecture"
+description: "Track structural and systemic deficiencies requiring strategic refactoring."
+title: "[ARCH] "
+labels:
+  - "source:agent"
+  - "status:needs-triage"
+  - "type:architecture"
+  - "priority:p2"
+body:
+  - type: markdown
+    attributes:
+      value: |
+        ## Agent Issue Protocol: Architecture Contract
+
+        Use this template for `[ARCH]` findings only.
+
+        This template tracks structural or systemic deficiencies rather than
+        localized bugs.
+
+        Valid title format:
+
+        ```text
+        [ARCH] {specific_component/service/boundary} {describe_state_not_fix}
+        ```
+
+        Title must be **80 characters or fewer** and must describe the current
+        structural state, not the proposed refactor.
+
+        Valid example:
+
+        ```text
+        [ARCH] UserAuthService and PaymentService share raw access to users_table
+        ```
+
+        Default execution tier is `priority:p2`.
+
+        Handle asynchronously through strategic refactoring unless the
+        architectural flaw is coupled to an active security incident, outage,
+        data-loss risk, or production-impacting degradation.
+
+        Authorized trigger conditions include:
+
+        - Distributed monolith symptoms requiring synchronized deployments
+          across service boundaries.
+        - Data boundary violations, including shared databases accessed by
+          multiple discrete services.
+        - God classes or god services capturing `>60%` of logic or traffic.
+        - Resilience gaps such as missing circuit breakers on external
+          dependencies.
+        - Missing idempotency on retryable operations.
+        - Single points of failure such as un-replicated data stores, single-AZ
+          dependencies, or single shared caches.
+        - Contract drift between documented schema definitions, such as
+          OpenAPI, and observed physical state behavior.
+        - Observability black holes in critical paths, including missing
+          structured logging, tracing, or metrics.
+
+        The exact upstream YAML syntax for this template was classified as
+        `[UNDEFINED ARCHITECTURAL VARIABLE]`; this file implements the defined
+        structural contract, label matrix, execution tier, operational triggers,
+        and payload requirements.
+
+  - type: dropdown
+    id: architectural-trigger
+    attributes:
+      label: "Architectural Trigger"
+      description: "Classify the structural anti-pattern or systemic deficiency."
+      options:
+        - "Distributed monolith symptom"
+        - "Data boundary violation"
+        - "God class or god service"
+        - "Resilience gap"
+        - "Missing idempotency"
+        - "Single point of failure"
+        - "Contract drift"
+        - "Observability black hole"
+        - "Other systemic architectural deficiency"
+    validations:
+      required: true
+
+  - type: dropdown
+    id: execution-tier
+    attributes:
+      label: "Execution Tier"
+      description: "Default is priority:p2 unless coupled to an active security or outage threat."
+      options:
+        - "priority:p2"
+        - "priority:p1"
+        - "priority:p0"
+      default: 0
+    validations:
+      required: true
+
+  - type: textarea
+    id: forensic-evidence-trace
+    attributes:
+      label: "1. Forensic Evidence Trace"
+      description: "Provide concrete evidence exposing the structural flaw: cross-service file paths, queries, schema diffs, dependency traces, topology notes, logs, metrics, or architectural traces."
+      placeholder: |
+        Evidence:
+        - Cross-service paths:
+        - Query/schema diff:
+        - Dependency or call trace:
+        - Observability/metric/log evidence:
+        - Commit SHA:
+    validations:
+      required: true
+
+  - type: textarea
+    id: state-delta-assertion
+    attributes:
+      label: "2. State Delta Assertion (FSV Style)"
+      description: "Declare Expected Architectural State vs Observed State using FSV-style comparison."
+      placeholder: |
+        Expected architectural state:
+          SoT/design contract:
+          Boundary/resilience/observability expectation:
+
+        Observed state:
+          Physical implementation:
+          Runtime or repository evidence:
+
+        Delta:
+          Expected architecture != observed state because ...
+    validations:
+      required: true
+
+  - type: textarea
+    id: blast-radius-definition
+    attributes:
+      label: "3. Blast Radius Definition"
+      description: "Scope the impact of the architectural flaw, including cascading failure, deployment coupling, data integrity risk, scalability limits, or observability loss."
+      placeholder: |
+        Impacted scope:
+        - Components/services/boundaries:
+        - Failure mode:
+        - User/system/data impact:
+        - Scalability or maintainability risk:
+        - Example cascading risk:
+    validations:
+      required: true
+
+  - type: textarea
+    id: reproduction-sequence
+    attributes:
+      label: "4. Reproduction Sequence"
+      description: "List steps to verify the structural constraint or architectural flaw, if applicable."
+      placeholder: |
+        1. Inspect service boundary or component graph ...
+        2. Compare documented contract against physical implementation ...
+        3. Trace dependency/call/data path ...
+        4. Verify shared state, SPOF, contract drift, or observability gap ...
+    validations:
+      required: true
+
+  - type: textarea
+    id: execution-directive
+    attributes:
+      label: "5. Execution Directive"
+      description: "Suggest the next action for the polling, pickup, or architecture-review agent."
+      placeholder: |
+        Suggested next action:
+        - investigate further
+        - isolate shared data boundary
+        - extract service contract
+        - add circuit breaker
+        - add idempotency key
+        - eliminate SPOF
+        - reconcile OpenAPI/schema drift
+        - add structured logging, tracing, or metrics
+        - extract Auth state to isolated service with defined gRPC contract
+    validations:
+      required: true
+
+  - type: textarea
+    id: traceability-footer
+    attributes:
+      label: "6. Traceability Footer"
+      description: "Append execution identity metadata for deterministic multi-agent synchronization."
+      value: |
+        ---
+        Executing agent: agent:
+        Session ID:
+        Commit SHA:
+      placeholder: |
+        ---
+        Executing agent: agent:<name>
+        Session ID: session-id
+        Commit SHA: commit-sha
+    validations:
+      required: true

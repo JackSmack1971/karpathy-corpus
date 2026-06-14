@@ -1,0 +1,197 @@
+name: "Security Finding"
+description: "Track vulnerabilities, cryptographic weaknesses, and active exploitation vectors."
+title: "[SEC] "
+labels:
+  - "source:agent"
+  - "status:needs-triage"
+  - "type:security"
+  - "priority:p1"
+body:
+  - type: markdown
+    attributes:
+      value: |
+        ## Agent Issue Protocol: Security Contract
+
+        Use this template for `[SEC]` findings only.
+
+        This template tracks vulnerabilities, cryptographic weaknesses, and
+        active exploitation vectors requiring preemptive threat isolation.
+
+        Valid title format:
+
+        ```text
+        [SEC] {specific_symbol/file/endpoint} {describe_state_not_fix}
+        ```
+
+        Title must be **80 characters or fewer** and must describe the current
+        vulnerable state, not the proposed fix.
+
+        Valid example:
+
+        ```text
+        [SEC] dangerous-eval at api/handler.py:142 [fp:semgrep:py-eval-handler-142]
+        ```
+
+        Default security priority is `priority:p1`. Escalate to `priority:p0`
+        when the finding is actively exploitable, externally reachable, causes
+        credential exposure, enables privilege escalation, or creates immediate
+        data exfiltration risk.
+
+        Authorized trigger conditions include:
+
+        - Weak or custom cryptography such as MD5, SHA1, DES, or ECB.
+        - SQL, NoSQL, OS, template, or prompt injection vulnerabilities.
+        - Missing authentication or authorization boundaries.
+        - Missing input validation, output encoding, or CSRF protection.
+        - Verbose error messages leaking internal structures.
+        - Missing security headers or TLS protections.
+        - Hardcoded secrets. File the issue even after removal so credential
+          rotation remains tracked.
+
+        [!] SYSTEM INVARIANT:
+
+        For credential-class findings involving active leaked tokens or keys,
+        bypass this standard issue template and use GitHub Security Advisories
+        so disclosure remains explicitly gated.
+
+        Do not paste active secrets, tokens, private keys, credentials, session
+        cookies, or exploitable production payloads into this issue.
+
+        The exact upstream YAML syntax for this template was classified as
+        `[UNDEFINED ARCHITECTURAL VARIABLE]`; this file implements the defined
+        structural contract, label matrix, operational triggers, security
+        advisory bypass invariant, and payload requirements.
+
+  - type: dropdown
+    id: priority-override
+    attributes:
+      label: "Priority Override"
+      description: "Select the current incident priority. Use P0 only for immediate or active exploitation risk."
+      options:
+        - "priority:p1"
+        - "priority:p0"
+      default: 0
+    validations:
+      required: true
+
+  - type: dropdown
+    id: security-category
+    attributes:
+      label: "Security Category"
+      description: "Classify the vulnerability or weakness."
+      options:
+        - "Cryptography weakness"
+        - "Injection vector"
+        - "Authentication or authorization boundary failure"
+        - "Input validation failure"
+        - "Output encoding failure"
+        - "CSRF protection failure"
+        - "Information disclosure"
+        - "Missing security headers or TLS protection"
+        - "Secrets management"
+        - "Other security weakness"
+    validations:
+      required: true
+
+  - type: checkboxes
+    id: credential-advisory-gate
+    attributes:
+      label: "Credential Advisory Gate"
+      description: "Confirm this issue does not expose active credential-class material."
+      options:
+        - label: "This issue does not contain active secrets, tokens, keys, credentials, session cookies, or production exploit payloads."
+          required: true
+        - label: "If active leaked credentials are involved, a GitHub Security Advisory will be used instead of this issue template."
+          required: true
+
+  - type: input
+    id: forensic-evidence-trace
+    attributes:
+      label: "1. Forensic Evidence Trace"
+      description: "Provide sanitized evidence: file:line, diff reference, detector fingerprint, git SHA, or scanner finding. Do not paste active secrets."
+      placeholder: "Example: api/handler.py:142; semgrep fingerprint py-eval-handler-142; commit abc1234..."
+    validations:
+      required: true
+
+  - type: textarea
+    id: state-delta-assertion
+    attributes:
+      label: "2. State Delta Assertion (FSV Style)"
+      description: "Declare the Expected vs Observed security state using FSV-style Source of Truth comparison."
+      placeholder: |
+        Expected:
+          SoT: Security boundary should prevent ...
+          Runtime/code/config state: ...
+
+        Observed:
+          SoT: ...
+          Runtime/code/config state: ...
+
+        Delta:
+          SoT != observed state because ...
+    validations:
+      required: true
+
+  - type: textarea
+    id: blast-radius-definition
+    attributes:
+      label: "3. Blast Radius Definition"
+      description: "Scope the vulnerability impact, such as data exfiltration, privilege escalation, account takeover, lateral movement, denial of service, or integrity loss."
+      placeholder: |
+        Impacted scope:
+        - Component/file/endpoint:
+        - Reachability:
+        - Exploit class:
+        - Data or privilege impact:
+        - Affected users/services/agents:
+    validations:
+      required: true
+
+  - type: textarea
+    id: reproduction-sequence
+    attributes:
+      label: "4. Reproduction Sequence"
+      description: "List sanitized deterministic steps required to trigger or verify the exploit condition. Do not include active exploit payloads against production."
+      placeholder: |
+        1. Checkout commit ...
+        2. Run scanner/test ...
+        3. Send sanitized request or execute local proof ...
+        4. Observe vulnerable state ...
+    validations:
+      required: true
+
+  - type: textarea
+    id: execution-directive
+    attributes:
+      label: "5. Execution Directive"
+      description: "Suggest the next action for the polling, pickup, or incident-response agent."
+      placeholder: |
+        Suggested next action:
+        - investigate further
+        - isolate vulnerable path
+        - rotate credentials after removal
+        - add missing authorization check
+        - replace weak cryptography
+        - patch injection vector
+        - add regression test
+        - escalate to GitHub Security Advisory
+    validations:
+      required: true
+
+  - type: textarea
+    id: traceability-footer
+    attributes:
+      label: "6. Traceability Footer"
+      description: "Append execution identity metadata for deterministic multi-agent synchronization."
+      value: |
+        ---
+        Executing agent: agent:
+        Session ID:
+        Commit SHA:
+      placeholder: |
+        ---
+        Executing agent: agent:<name>
+        Session ID: session-id
+        Commit SHA: commit-sha
+    validations:
+      required: true

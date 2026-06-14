@@ -1,0 +1,135 @@
+name: "Technical Debt"
+description: "Track sub-optimal states categorized as works-but-should-improve."
+title: "[DEBT] "
+labels:
+  - "source:agent"
+  - "status:needs-triage"
+  - "type:tech-debt"
+body:
+  - type: markdown
+    attributes:
+      value: |
+        ## Agent Issue Protocol: Technical Debt Contract
+
+        Use this template for `[DEBT]` items only.
+
+        This template tracks sub-optimal states categorized as:
+
+        ```text
+        works, should improve
+        ```
+
+        Valid title format:
+
+        ```text
+        [DEBT] {specific_symbol/file/endpoint} {describe_state_not_fix}
+        ```
+
+        Title must be **80 characters or fewer** and must describe the current
+        state, not the proposed fix.
+
+        Trigger this template before the execution turn ends when observed
+        technical debt is bypassed during the WORK phase.
+
+        Operational triggers include:
+
+        - Intentional shortcuts requiring an explicit payback note.
+        - Dependency vulnerabilities or unpatched CVEs in the dependency tree.
+        - Runtime degradation from deprecated APIs or unsupported runtimes.
+        - Verification gaps on code modified during the current session.
+        - Documentation drift from stale or inaccurate documentation.
+        - External couplings or workarounds for upstream bugs.
+
+        The exact upstream YAML syntax for this template was classified as
+        `[UNDEFINED ARCHITECTURAL VARIABLE]`; this file implements the defined
+        structural contract, label matrix, operational triggers, and payload
+        requirements.
+
+  - type: input
+    id: forensic-evidence-trace
+    attributes:
+      label: "1. Forensic Evidence Trace"
+      description: "Provide concrete evidence: file:line, diff, query output, commit SHA, failing check, stale doc reference, dependency finding, or runtime warning."
+      placeholder: "Example: src/payments/client.ts:88; diff abc1234..def5678; CVE output..."
+    validations:
+      required: true
+
+  - type: textarea
+    id: state-delta-assertion
+    attributes:
+      label: "2. State Delta Assertion (FSV Style)"
+      description: "Declare the Expected vs Observed state using FSV-style Source of Truth comparison."
+      placeholder: |
+        Expected:
+          SoT: ...
+          Runtime/code/docs/tests: ...
+
+        Observed:
+          SoT: ...
+          Runtime/code/docs/tests: ...
+
+        Delta:
+          SoT != observed state because ...
+    validations:
+      required: true
+
+  - type: textarea
+    id: blast-radius-definition
+    attributes:
+      label: "3. Blast Radius Definition"
+      description: "Scope the impact of the technical debt across code, tests, docs, dependencies, runtime, agents, services, data, or users."
+      placeholder: |
+        Impacted scope:
+        - Component/file/endpoint:
+        - Environment/runtime:
+        - Tests/docs/dependencies:
+        - User/agent/data impact:
+    validations:
+      required: true
+
+  - type: textarea
+    id: reproduction-sequence
+    attributes:
+      label: "4. Reproduction Sequence"
+      description: "List deterministic steps required to observe the debt. Required when the debt is non-trivial."
+      placeholder: |
+        1. Checkout commit ...
+        2. Run ...
+        3. Inspect ...
+        4. Observe ...
+    validations:
+      required: true
+
+  - type: textarea
+    id: execution-directive
+    attributes:
+      label: "5. Execution Directive"
+      description: "Suggest the next action for the polling or pickup agent."
+      placeholder: |
+        Suggested next action:
+        - investigate further
+        - add missing verification
+        - replace deprecated API
+        - patch vulnerable dependency
+        - reconcile stale documentation
+        - track or remove upstream workaround
+    validations:
+      required: true
+
+  - type: textarea
+    id: traceability-footer
+    attributes:
+      label: "6. Traceability Footer"
+      description: "Append execution identity metadata for deterministic multi-agent synchronization."
+      value: |
+        ---
+        Executing agent:
+        Session ID:
+        Commit SHA:
+      placeholder: |
+        ---
+        Executing agent: agent-name/version
+        Session ID: session-id
+        Commit SHA: commit-sha
+    validations:
+      required: true
