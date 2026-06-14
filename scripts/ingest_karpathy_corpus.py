@@ -912,6 +912,7 @@ def main() -> int:
 
     downloads_log = base_dir / "metadata" / "downloads.jsonl"
     skipped_log = base_dir / "metadata" / "skipped.jsonl"
+    errors_log = base_dir / "metadata" / "errors.jsonl"
     run_log = {
         "event": "run_started",
         "run_id": utc_now(),
@@ -967,10 +968,12 @@ def main() -> int:
 
         if result.get("status") == "ok":
             write_jsonl(downloads_log, record)
+        elif result.get("status") == "error":
+            write_jsonl(errors_log, record)
         elif result.get("status") in {"skipped", "dry-run"}:
             write_jsonl(skipped_log, record)
         else:
-            write_jsonl(skipped_log, record)
+            write_jsonl(errors_log, record)
 
         print(json.dumps(record, ensure_ascii=True))
 
