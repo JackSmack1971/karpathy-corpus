@@ -913,13 +913,18 @@ def main() -> int:
     downloads_log = base_dir / "metadata" / "downloads.jsonl"
     skipped_log = base_dir / "metadata" / "skipped.jsonl"
     run_log = {
-        "timestamp": utc_now(),
+        "event": "run_started",
+        "run_id": utc_now(),
         "base_dir": str(base_dir),
         "manifest": str(manifest_path),
         "dry_run": args.dry_run,
         "source_count": len(sources),
     }
     write_jsonl(base_dir / "metadata" / "runs.jsonl", run_log)
+    run_id = run_log["run_id"]
+    ok_count = 0
+    skipped_count = 0
+    error_count = 0
 
     for source in sources:
         record = {
@@ -938,6 +943,14 @@ def main() -> int:
                 "error": repr(exc),
             }
         record.update(result)
+
+        status = result.get("status")
+        if status == "ok":
+            ok_count += 1
+        elif status in {"skipped", "dry-run"}:
+            skipped_count += 1
+        else:
+            error_count += 1
 
         if source.get("kind") == "youtube":
             for video_result in result.get("skipped_videos", []):
@@ -960,6 +973,18 @@ def main() -> int:
             write_jsonl(skipped_log, record)
 
         print(json.dumps(record, ensure_ascii=True))
+
+    write_jsonl(
+        base_dir / "metadata" / "runs.jsonl",
+        {
+            "event": "run_completed",
+            "run_id": run_id,
+            "completed_at": utc_now(),
+            "ok": ok_count,
+            "skipped": skipped_count,
+            "error": error_count,
+        },
+    )
 
     return 0
 
