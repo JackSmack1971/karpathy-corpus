@@ -548,7 +548,7 @@ def clone_git_repo(url: str, output: Path, dry_run: bool) -> dict:
     }
 
 
-def copy_tree(source_dir: Path, output_dir: Path, dry_run: bool) -> dict:
+def copy_tree(source_dir: Path, output_dir: Path, dry_run: bool, force: bool = False) -> dict:
     if dry_run:
         return {
             "status": "dry-run",
@@ -562,6 +562,14 @@ def copy_tree(source_dir: Path, output_dir: Path, dry_run: bool) -> dict:
             "source_dir": str(source_dir),
             "output": str(output_dir),
             "reason": "source directory does not exist",
+        }
+
+    if not force and output_dir.exists() and output_dir.is_dir() and any(output_dir.iterdir()):
+        return {
+            "status": "skipped",
+            "source_dir": str(source_dir),
+            "output": str(output_dir),
+            "reason": "output already exists",
         }
 
     output_dir.mkdir(parents=True, exist_ok=True)
@@ -809,7 +817,7 @@ def process_youtube_source(base_dir: Path, source: dict, dry_run: bool) -> dict:
     }
 
 
-def process_source(base_dir: Path, source: dict, dry_run: bool) -> dict:
+def process_source(base_dir: Path, source: dict, dry_run: bool, force: bool = False) -> dict:
     kind = source["kind"]
     url = source.get("url")
     output = source.get("output")
@@ -828,7 +836,7 @@ def process_source(base_dir: Path, source: dict, dry_run: bool) -> dict:
             raise ValueError(f"source {source['id']} is missing source_dir")
         if output is None:
             raise ValueError(f"source {source['id']} is missing output")
-        return copy_tree(base_dir / source_dir, base_dir / output, dry_run)
+        return copy_tree(base_dir / source_dir, base_dir / output, dry_run, force=force)
     if kind == "youtube":
         return process_youtube_source(base_dir, source, dry_run)
 
@@ -879,6 +887,7 @@ def main() -> int:
     }
     write_jsonl(base_dir / "metadata" / "runs.jsonl", run_log)
 
+    completed: dict[str, str | None] = {}
     for source in sources:
         record = {
             "timestamp": utc_now(),
@@ -887,8 +896,17 @@ def main() -> int:
             "bucket": source.get("bucket"),
             "url": source.get("url"),
         }
-        result = process_source(base_dir, source, args.dry_run)
+        depends_on = source.get("depends_on", [])
+        unmet = [dep for dep in depends_on if completed.get(dep) != "ok"]
+        if unmet:
+            result = {
+                "status": "skipped",
+                "reason": f"unmet depends_on: {unmet}",
+            }
+        else:
+            result = process_source(base_dir, source, args.dry_run)
         record.update(result)
+        completed[source.get("id")] = result.get("status")
 
         if source.get("kind") == "youtube":
             for video_result in result.get("skipped_videos", []):

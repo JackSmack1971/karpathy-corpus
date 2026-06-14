@@ -11,6 +11,7 @@
       "id": "karpathy_github_blog_posts",
       "kind": "copy_tree",
       "bucket": "github-blog",
+      "depends_on": ["karpathy_github_blog_repo"],
       "source_dir": "sources/github/karpathy.github.io/_posts",
       "output": "raw/github-blog"
     },
