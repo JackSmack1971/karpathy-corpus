@@ -55,6 +55,14 @@ function kindLabel(kind) {
   }[kind] ?? kind;
 }
 
+function escapeHtml(value) {
+  return String(value ?? "")
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;");
+}
+
 function renderStats(manifest) {
   const counts = manifest.reduce(
     (acc, source) => {
@@ -122,10 +130,10 @@ function renderBuckets(manifest) {
       (bucket) => `
         <article class="bucket-card">
           <div class="bucket-header">
-            <div class="bucket-name">${bucket}</div>
+            <div class="bucket-name">${escapeHtml(bucket)}</div>
             <div class="bucket-count">${grouped[bucket].length}</div>
           </div>
-          <p>${bucketDescription(bucket)}</p>
+          <p>${escapeHtml(bucketDescription(bucket))}</p>
         </article>`
     )
     .join("");
@@ -168,17 +176,17 @@ function renderSources(manifest) {
         source.transcript_output ? `transcript: ${source.transcript_output}` : null,
         source.source_dir ? `source_dir: ${source.source_dir}` : null,
       ]
-        .filter(Boolean)
-        .join(" · ");
+    .filter(Boolean)
+    .join(" · ");
 
       return `
         <article class="source-card">
           <div class="source-topline">
-            <div class="source-id">${source.id}</div>
-            <div class="badge">${kindLabel(source.kind)}</div>
+            <div class="source-id">${escapeHtml(source.id)}</div>
+            <div class="badge">${escapeHtml(kindLabel(source.kind))}</div>
           </div>
-          <div class="source-url">${source.url ?? "(local copy)"}</div>
-          <div class="source-extra">${extras}</div>
+          <div class="source-url">${escapeHtml(source.url ?? "(local copy)")}</div>
+          <div class="source-extra">${escapeHtml(extras)}</div>
         </article>`;
     })
     .join("");
@@ -203,8 +211,8 @@ async function loadManifest() {
   } catch (error) {
     els.sources.innerHTML = `
       <article class="source-card">
-        <p>Unable to load manifest from <span class="source-url">${manifestUrl}</span>.</p>
-        <p class="source-extra">${error.message}</p>
+        <p>Unable to load manifest from <span class="source-url">${escapeHtml(manifestUrl)}</span>.</p>
+        <p class="source-extra">${escapeHtml(error.message)}</p>
       </article>`;
   }
 }
