@@ -887,7 +887,14 @@ def main() -> int:
             "bucket": source.get("bucket"),
             "url": source.get("url"),
         }
-        result = process_source(base_dir, source, args.dry_run)
+        try:
+            result = process_source(base_dir, source, args.dry_run)
+        except Exception as exc:
+            result = {
+                "status": "error",
+                "source_id": source.get("id", "<unknown>"),
+                "error": repr(exc),
+            }
         record.update(result)
 
         if source.get("kind") == "youtube":
