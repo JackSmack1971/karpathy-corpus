@@ -56,6 +56,17 @@ def ensure_layout(base_dir: Path) -> None:
         (base_dir / rel).mkdir(parents=True, exist_ok=True)
 
 
+def confine_to_base(base_dir: Path, candidate: Path, label: str) -> None:
+    base_resolved = base_dir.resolve()
+    candidate_resolved = candidate.resolve()
+    try:
+        candidate_resolved.relative_to(base_resolved)
+    except ValueError as exc:
+        raise ValueError(
+            f"Path traversal detected for {label!r} — resolves outside base_dir: {candidate!r}"
+        ) from exc
+
+
 def load_manifest(path: Path) -> dict:
     with path.open("r", encoding="utf-8") as fh:
         return json.load(fh)
@@ -731,19 +742,24 @@ def process_youtube_source(base_dir: Path, source: dict, dry_run: bool) -> dict:
     if enumerate_result.get("status") != "ok":
         return enumerate_result
 
+    staging_root_path = base_dir / staging_root
+    confine_to_base(base_dir, staging_root_path, "staging_root")
+
     transcript_results: list[dict] = []
     skipped_videos: list[dict] = []
     for entry in enumerate_result.get("entries", []):
         video_id = entry.get("id")
         video_url = youtube_entry_url(entry)
-        entry_dir = base_dir / staging_root / str(video_id or entry.get("display_id") or "unknown")
+        safe_video_id = re.sub(r"[^\w\-]", "_", str(video_id or entry.get("display_id") or "unknown"))
+        entry_dir = staging_root_path / safe_video_id
+        confine_to_base(base_dir, entry_dir, "staging entry dir")
         if entry_dir.exists():
             if entry_dir.is_dir():
                 shutil.rmtree(entry_dir)
             else:
                 entry_dir.unlink()
         entry_dir.mkdir(parents=True, exist_ok=True)
-        output_template = str(entry_dir / f"{video_id or entry_dir.name}.%(ext)s")
+        output_template = str(entry_dir / f"{safe_video_id}.%(ext)s")
 
         if not video_url:
             result = {
@@ -796,7 +812,13 @@ def process_youtube_source(base_dir: Path, source: dict, dry_run: bool) -> dict:
             skipped_videos.append(result)
             continue
 
-        output_path = base_dir / transcript_output.replace("%(id)s", info.get("id", video_id or entry_dir.name))
+        safe_transcript_id = re.sub(
+            r"[^\w\-]",
+            "_",
+            str(info.get("id", video_id or entry_dir.name)),
+        )
+        output_path = base_dir / transcript_output.replace("%(id)s", safe_transcript_id)
+        confine_to_base(base_dir, output_path, "transcript_output")
         transcript_results.append(normalize_transcript(info, subtitle_path, output_path, dry_run))
 
     ok_count = sum(1 for transcript in transcript_results if transcript.get("status") == "ok")
@@ -829,18 +851,26 @@ def process_source(base_dir: Path, source: dict, dry_run: bool) -> dict:
     if kind == "url":
         if output is None:
             raise ValueError(f"source {source['id']} is missing output")
-        return download_url(base_dir, url, base_dir / output, dry_run, source["id"])
+        output_path = base_dir / output
+        confine_to_base(base_dir, output_path, "output")
+        return download_url(base_dir, url, output_path, dry_run, source["id"])
     if kind == "git":
         if output is None:
             raise ValueError(f"source {source['id']} is missing output")
-        return clone_git_repo(url, base_dir / output, dry_run)
+        output_path = base_dir / output
+        confine_to_base(base_dir, output_path, "output")
+        return clone_git_repo(url, output_path, dry_run)
     if kind == "copy_tree":
         source_dir = source.get("source_dir")
         if source_dir is None:
             raise ValueError(f"source {source['id']} is missing source_dir")
         if output is None:
             raise ValueError(f"source {source['id']} is missing output")
-        return copy_tree(base_dir / source_dir, base_dir / output, dry_run)
+        source_path = base_dir / source_dir
+        output_path = base_dir / output
+        confine_to_base(base_dir, source_path, "source_dir")
+        confine_to_base(base_dir, output_path, "output")
+        return copy_tree(source_path, output_path, dry_run)
     if kind == "youtube":
         return process_youtube_source(base_dir, source, dry_run)
 
