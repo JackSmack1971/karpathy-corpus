@@ -78,6 +78,7 @@ def test_html_fixtures(module, update_goldens: bool) -> None:
     cases = [
         ("html/karpathy_notes.html", "html/karpathy_notes.md"),
         ("html/clean_landing.html", "html/clean_landing.md"),
+        ("html/heading_anchor.html", "html/heading_anchor.md"),
     ]
     for source_rel, golden_rel in cases:
         source = load_text(FIXTURES / source_rel)

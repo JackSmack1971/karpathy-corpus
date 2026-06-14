@@ -198,12 +198,12 @@ class MarkdownHTMLParser(HTMLParser):
             if self.pre_mode:
                 self._append_fragment(text)
             return
-        if self.link_stack:
-            self.link_stack[-1]["text"].append(text)
-            return
         if self.pending_heading_prefix:
             self._append_fragment(self.pending_heading_prefix)
             self.pending_heading_prefix = ""
+        if self.link_stack:
+            self.link_stack[-1]["text"].append(text)
+            return
         if self.pre_mode:
             self._append_fragment(text)
         else:
@@ -899,7 +899,14 @@ def main() -> int:
             "bucket": source.get("bucket"),
             "url": source.get("url"),
         }
-        result = process_source(base_dir, source, args.dry_run)
+        try:
+            result = process_source(base_dir, source, args.dry_run)
+        except Exception as exc:
+            result = {
+                "status": "error",
+                "source_id": source.get("id", "<unknown>"),
+                "error": repr(exc),
+            }
         record.update(result)
 
         if source.get("kind") == "youtube":

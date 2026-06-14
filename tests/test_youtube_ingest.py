@@ -140,42 +140,56 @@ def test_process_youtube_source_continues_after_video_error(monkeypatch) -> None
         assert any(any("video_two" in part for part in command) for command in calls)
 
 
-def test_process_youtube_source_returns_error_when_all_videos_fail(monkeypatch) -> None:
+def test_main_continues_after_source_error(monkeypatch) -> None:
     with tempfile.TemporaryDirectory() as tmpdir:
         base_dir = Path(tmpdir)
-        source = {
-            "id": "example_youtube",
-            "kind": "youtube",
-            "url": "https://www.youtube.com/playlist?list=PL123",
-            "staging_root": "sources/transcripts/youtube",
-            "staging_template": "sources/transcripts/youtube/%(id)s/%(id)s.%(ext)s",
-            "transcript_output": "raw/transcripts/youtube/%(id)s.json",
-        }
-
-        def fake_run(command, stdout=None, stderr=None, text=None):
-            if "--dump-single-json" in command:
-                payload = {
-                    "_type": "playlist",
-                    "entries": [
-                        {"id": "video_one", "url": "https://www.youtube.com/watch?v=video_one"},
-                        {"id": "video_two", "url": "https://www.youtube.com/watch?v=video_two"},
-                    ],
+        manifest_path = base_dir / "sources.manifest.json"
+        manifest_path.write_text(
+            json.dumps(
+                {
+                    "sources": [
+                        {"id": "source_one", "kind": "url", "url": "https://example.com/one", "output": "raw/one.txt"},
+                        {"id": "source_bad", "kind": "url", "url": "https://example.com/bad"},
+                        {"id": "source_three", "kind": "url", "url": "https://example.com/three", "output": "raw/three.txt"},
+                    ]
                 }
-                return FakeCompletedProcess(0, stdout=json.dumps(payload), stderr="")
+            ),
+            encoding="utf-8",
+        )
 
-            return FakeCompletedProcess(1, stdout="", stderr="HTTP Error 429: Too Many Requests")
+        seen_sources: list[str] = []
 
-        monkeypatch.setattr(MODULE.shutil, "which", lambda name: "yt-dlp" if name == "yt-dlp" else None)
-        monkeypatch.setattr(MODULE.subprocess, "run", fake_run)
+        def fake_process_source(base_dir_arg, source, dry_run):
+            seen_sources.append(source["id"])
+            if source["id"] == "source_bad":
+                raise ValueError("source source_bad is missing output")
+            return {"status": "ok", "output": source["output"]}
 
-        result = MODULE.process_youtube_source(base_dir, source, dry_run=False)
+        monkeypatch.setattr(MODULE, "process_source", fake_process_source)
+        monkeypatch.setattr(
+            MODULE.sys,
+            "argv",
+            [
+                "ingest_karpathy_corpus.py",
+                "--base-dir",
+                str(base_dir),
+                "--manifest",
+                str(manifest_path),
+            ],
+        )
 
-        assert result["status"] == "error"
-        assert result["error"] == "no transcripts produced"
-        assert len(result["transcripts"]) == 2
-        assert all(transcript["status"] == "skipped" for transcript in result["transcripts"])
-        assert len(result["skipped_videos"]) == 2
-        assert not (base_dir / "raw" / "transcripts" / "youtube").exists()
+        assert MODULE.main() == 0
+
+        downloads_log = (base_dir / "metadata" / "downloads.jsonl").read_text(encoding="utf-8").splitlines()
+        skipped_log = (base_dir / "metadata" / "skipped.jsonl").read_text(encoding="utf-8").splitlines()
+
+        assert seen_sources == ["source_one", "source_bad", "source_three"]
+        assert [json.loads(line)["id"] for line in downloads_log] == ["source_one", "source_three"]
+        assert len(skipped_log) == 1
+        skipped_record = json.loads(skipped_log[0])
+        assert skipped_record["id"] == "source_bad"
+        assert skipped_record["status"] == "error"
+        assert "missing output" in skipped_record["error"]
 
 
 def test_normalize_transcript_infers_language_from_subtitle_name() -> None:
