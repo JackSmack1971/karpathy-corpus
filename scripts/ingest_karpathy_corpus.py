@@ -799,6 +799,18 @@ def process_youtube_source(base_dir: Path, source: dict, dry_run: bool) -> dict:
         output_path = base_dir / transcript_output.replace("%(id)s", info.get("id", video_id or entry_dir.name))
         transcript_results.append(normalize_transcript(info, subtitle_path, output_path, dry_run))
 
+    ok_count = sum(1 for transcript in transcript_results if transcript.get("status") == "ok")
+    if ok_count == 0 and transcript_results:
+        return {
+            "status": "error",
+            "url": url,
+            "staging_template": staging_template,
+            "staging_root": str(base_dir / staging_root),
+            "error": "no transcripts produced",
+            "transcripts": transcript_results,
+            "skipped_videos": skipped_videos,
+        }
+
     return {
         "status": "ok",
         "url": url,

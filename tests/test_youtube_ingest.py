@@ -140,6 +140,44 @@ def test_process_youtube_source_continues_after_video_error(monkeypatch) -> None
         assert any(any("video_two" in part for part in command) for command in calls)
 
 
+def test_process_youtube_source_returns_error_when_all_videos_fail(monkeypatch) -> None:
+    with tempfile.TemporaryDirectory() as tmpdir:
+        base_dir = Path(tmpdir)
+        source = {
+            "id": "example_youtube",
+            "kind": "youtube",
+            "url": "https://www.youtube.com/playlist?list=PL123",
+            "staging_root": "sources/transcripts/youtube",
+            "staging_template": "sources/transcripts/youtube/%(id)s/%(id)s.%(ext)s",
+            "transcript_output": "raw/transcripts/youtube/%(id)s.json",
+        }
+
+        def fake_run(command, stdout=None, stderr=None, text=None):
+            if "--dump-single-json" in command:
+                payload = {
+                    "_type": "playlist",
+                    "entries": [
+                        {"id": "video_one", "url": "https://www.youtube.com/watch?v=video_one"},
+                        {"id": "video_two", "url": "https://www.youtube.com/watch?v=video_two"},
+                    ],
+                }
+                return FakeCompletedProcess(0, stdout=json.dumps(payload), stderr="")
+
+            return FakeCompletedProcess(1, stdout="", stderr="HTTP Error 429: Too Many Requests")
+
+        monkeypatch.setattr(MODULE.shutil, "which", lambda name: "yt-dlp" if name == "yt-dlp" else None)
+        monkeypatch.setattr(MODULE.subprocess, "run", fake_run)
+
+        result = MODULE.process_youtube_source(base_dir, source, dry_run=False)
+
+        assert result["status"] == "error"
+        assert result["error"] == "no transcripts produced"
+        assert len(result["transcripts"]) == 2
+        assert all(transcript["status"] == "skipped" for transcript in result["transcripts"])
+        assert len(result["skipped_videos"]) == 2
+        assert not (base_dir / "raw" / "transcripts" / "youtube").exists()
+
+
 def test_normalize_transcript_infers_language_from_subtitle_name() -> None:
     with tempfile.TemporaryDirectory() as tmpdir:
         base_dir = Path(tmpdir)
