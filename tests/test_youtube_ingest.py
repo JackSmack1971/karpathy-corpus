@@ -7,6 +7,8 @@ import time as time_module
 from pathlib import Path
 import sys
 
+import pytest
+
 
 ROOT = Path(__file__).resolve().parents[1]
 SCRIPT = ROOT / "scripts" / "ingest_karpathy_corpus.py"
@@ -223,3 +225,27 @@ def test_process_youtube_source_clears_stale_staging(monkeypatch) -> None:
         assert result["status"] == "ok"
         assert result["transcripts"][0]["status"] == "ok"
         assert (base_dir / "raw" / "transcripts" / "youtube" / "video_one.json").exists()
+
+
+def test_process_source_rejects_traversal_output(monkeypatch) -> None:
+    with tempfile.TemporaryDirectory() as tmpdir:
+        base_dir = Path(tmpdir)
+        source = {
+            "id": "traversal_test",
+            "kind": "url",
+            "url": "https://example.com",
+            "output": "../escape.txt",
+        }
+        called = {"download_url": False}
+
+        def fake_download_url(*args, **kwargs):
+            called["download_url"] = True
+            return {"status": "ok"}
+
+        monkeypatch.setattr(MODULE, "download_url", fake_download_url)
+
+        with pytest.raises(ValueError, match="Path traversal detected"):
+            MODULE.process_source(base_dir, source, dry_run=False)
+
+        assert not called["download_url"]
+        assert not (base_dir.parent / "escape.txt").exists()
