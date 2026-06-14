@@ -441,12 +441,24 @@ def normalize_transcript(info: dict, subtitle_path: Path, output: Path, dry_run:
     }
 
 
-def download_url(base_dir: Path, url: str, output: Path, dry_run: bool, source_id: str) -> dict:
+def download_url(
+    base_dir: Path, url: str, output: Path, dry_run: bool, source_id: str, force: bool = False
+) -> dict:
     if dry_run:
         return {
             "status": "dry-run",
             "url": url,
             "output": str(output),
+        }
+
+    if not force and output.exists():
+        return {
+            "status": "skipped",
+            "url": url,
+            "output": str(output),
+            "reason": "output already exists",
+            "sha256": sha256_file(output),
+            "bytes": output.stat().st_size,
         }
 
     request = urllib.request.Request(url, headers={"User-Agent": "Mozilla/5.0"})
@@ -809,7 +821,7 @@ def process_youtube_source(base_dir: Path, source: dict, dry_run: bool) -> dict:
     }
 
 
-def process_source(base_dir: Path, source: dict, dry_run: bool) -> dict:
+def process_source(base_dir: Path, source: dict, dry_run: bool, force: bool = False) -> dict:
     kind = source["kind"]
     url = source.get("url")
     output = source.get("output")
@@ -817,7 +829,7 @@ def process_source(base_dir: Path, source: dict, dry_run: bool) -> dict:
     if kind == "url":
         if output is None:
             raise ValueError(f"source {source['id']} is missing output")
-        return download_url(base_dir, url, base_dir / output, dry_run, source["id"])
+        return download_url(base_dir, url, base_dir / output, dry_run, source["id"], force=force)
     if kind == "git":
         if output is None:
             raise ValueError(f"source {source['id']} is missing output")
@@ -855,6 +867,7 @@ def main() -> int:
         help="Path to the source manifest (default: <base-dir>/sources.manifest.json)",
     )
     parser.add_argument("--dry-run", action="store_true", help="Print planned work without downloading")
+    parser.add_argument("--force", action="store_true", help="Refresh sources even when outputs already exist")
     args = parser.parse_args()
 
     base_dir = args.base_dir.resolve()
@@ -887,7 +900,7 @@ def main() -> int:
             "bucket": source.get("bucket"),
             "url": source.get("url"),
         }
-        result = process_source(base_dir, source, args.dry_run)
+        result = process_source(base_dir, source, args.dry_run, force=args.force)
         record.update(result)
 
         if source.get("kind") == "youtube":
