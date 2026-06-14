@@ -53,6 +53,22 @@ def test_command_construction() -> None:
     assert "--convert-subs" not in enumeration
 
 
+def test_validate_source_fields_contract() -> None:
+    for kind, required_fields in MODULE.REQUIRED_FIELDS_BY_KIND.items():
+        source = {"id": f"{kind}_source", "kind": kind}
+        error = MODULE.validate_source_fields(source)
+
+        assert error is not None
+        assert error["status"] == "error"
+        assert error["source_id"] == f"{kind}_source"
+        assert error["kind"] == kind
+
+        for field in required_fields:
+            source[field] = f"present:{field}"
+
+        assert MODULE.validate_source_fields(source) is None
+
+
 def test_backoff_retries(monkeypatch) -> None:
     command = ["yt-dlp", "--version"]
     calls = {"count": 0}

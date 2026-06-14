@@ -74,6 +74,29 @@ def write_jsonl(path: Path, record: dict) -> None:
         fh.write(json.dumps(record, ensure_ascii=True) + "\n")
 
 
+REQUIRED_FIELDS_BY_KIND = {
+    "url": ["output"],
+    "git": ["output"],
+    "copy_tree": ["source_dir", "output"],
+    "youtube": ["staging_template", "staging_root", "transcript_output"],
+}
+
+
+def validate_source_fields(source: dict) -> dict | None:
+    kind = source.get("kind", "")
+    required = REQUIRED_FIELDS_BY_KIND.get(kind, [])
+    missing = [field for field in required if source.get(field) is None]
+    if missing:
+        source_id = source.get("id")
+        return {
+            "status": "error",
+            "source_id": source_id,
+            "kind": kind,
+            "error": f"source {source_id} is missing required fields: {missing}",
+        }
+    return None
+
+
 def normalize_whitespace(text: str) -> str:
     return re.sub(r"[ \t\r\f\v]+", " ", text).strip()
 
@@ -716,16 +739,14 @@ def enumerate_youtube_entries(url: str, dry_run: bool) -> dict:
 
 
 def process_youtube_source(base_dir: Path, source: dict, dry_run: bool) -> dict:
+    validation_error = validate_source_fields(source)
+    if validation_error:
+        return validation_error
+
     url = source.get("url")
     staging_template = source.get("staging_template")
     staging_root = source.get("staging_root")
     transcript_output = source.get("transcript_output")
-    if staging_template is None:
-        raise ValueError(f"source {source['id']} is missing staging_template")
-    if staging_root is None:
-        raise ValueError(f"source {source['id']} is missing staging_root")
-    if transcript_output is None:
-        raise ValueError(f"source {source['id']} is missing transcript_output")
 
     enumerate_result = enumerate_youtube_entries(url, dry_run)
     if enumerate_result.get("status") != "ok":
@@ -810,33 +831,29 @@ def process_youtube_source(base_dir: Path, source: dict, dry_run: bool) -> dict:
 
 
 def process_source(base_dir: Path, source: dict, dry_run: bool) -> dict:
-    kind = source["kind"]
+    validation_error = validate_source_fields(source)
+    if validation_error:
+        return validation_error
+
+    kind = source.get("kind", "")
     url = source.get("url")
     output = source.get("output")
 
     if kind == "url":
-        if output is None:
-            raise ValueError(f"source {source['id']} is missing output")
         return download_url(base_dir, url, base_dir / output, dry_run, source["id"])
     if kind == "git":
-        if output is None:
-            raise ValueError(f"source {source['id']} is missing output")
         return clone_git_repo(url, base_dir / output, dry_run)
     if kind == "copy_tree":
         source_dir = source.get("source_dir")
-        if source_dir is None:
-            raise ValueError(f"source {source['id']} is missing source_dir")
-        if output is None:
-            raise ValueError(f"source {source['id']} is missing output")
         return copy_tree(base_dir / source_dir, base_dir / output, dry_run)
     if kind == "youtube":
         return process_youtube_source(base_dir, source, dry_run)
 
     return {
-        "status": "skipped",
-        "url": url,
-        "output": output,
-        "reason": f"unknown kind: {kind}",
+        "status": "error",
+        "source_id": source.get("id"),
+        "kind": kind,
+        "error": f"unknown kind: {kind!r}",
     }
 
 
